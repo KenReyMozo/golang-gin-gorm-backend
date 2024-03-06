@@ -25,6 +25,7 @@ func main() {
 	r.GET("/posts", controllers.GetPosts)
 	r.GET("/posts/:id", controllers.GetPost)
 	r.PUT("/posts/:id", controllers.UpdatePost)
+	r.PATCH("/posts/:id", controllers.PatchPost)
 
 	r.Run()
 }
