@@ -44,3 +44,23 @@ func GetPost(ctx *gin.Context) {
 
 	ctx.JSON(200, post)
 }
+
+func UpdatePost(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	var post model.Post
+	if initializers.DB.First(&post, id).Error != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
+	err := ctx.ShouldBindJSON(&post)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	initializers.DB.Save(&post)
+
+	ctx.JSON(200, post)
+}
