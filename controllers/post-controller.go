@@ -60,8 +60,20 @@ func UpdatePost(ctx *gin.Context) {
 		return
 	}
 
-	initializers.DB.Save(&post)
+	tx := initializers.DB.Begin()
 
+	if tx.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+
+	if err := tx.Model(&post).Where("id = ?", id).Updates(&post).Error; err != nil {
+		tx.Rollback()
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+		return
+	}
+
+	tx.Commit()
 	ctx.JSON(200, post)
 }
 
@@ -80,7 +92,20 @@ func PatchPost(ctx *gin.Context) {
 		return
 	}
 
-	initializers.DB.Model(&post).Updates(&post)
+	tx := initializers.DB.Begin()
+
+	if tx.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+
+	if err := tx.Model(&post).Where("id = ?", id).Updates(&post).Error; err != nil {
+		tx.Rollback()
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+		return
+	}
+
+	tx.Commit()
 
 	ctx.JSON(200, post)
 }
