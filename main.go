@@ -23,6 +23,7 @@ func main() {
 
 	r.POST("/posts", controllers.CreatePost)
 	r.GET("/posts", controllers.GetPosts)
+	r.GET("/posts/:id", controllers.GetPost)
 
 	r.Run()
 }

@@ -35,3 +35,12 @@ func GetPosts(ctx *gin.Context) {
 
 	ctx.JSON(200, posts)
 }
+
+func GetPost(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	var post model.Post
+	initializers.DB.First(&post, id)
+
+	ctx.JSON(200, post)
+}
