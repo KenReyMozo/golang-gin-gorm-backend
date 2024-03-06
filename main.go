@@ -20,6 +20,9 @@ func main() {
 		gin.Recovery(),
 		middlewares.Logger(),
 	)
+
 	r.POST("/posts", controllers.CreatePost)
+	r.GET("/posts", controllers.GetPosts)
+
 	r.Run()
 }

@@ -29,6 +29,9 @@ func CreatePost(ctx *gin.Context) {
 	ctx.JSON(200, post)
 }
 
-func GetPost(ctx *gin.Context) {
-	
+func GetPosts(ctx *gin.Context) {
+	var posts []model.Post
+	initializers.DB.Find(&posts)
+
+	ctx.JSON(200, posts)
 }
