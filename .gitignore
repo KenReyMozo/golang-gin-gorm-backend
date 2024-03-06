@@ -1,0 +1,33 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+vendor/
+
+# Go binary
+bin/
+
+# Build file
+*.exe
+*.out
+
+# Go packages
+*.test
+
+# Dependency directories
+/vendor/
+
+# Environment Files
+*.env
+
+# Log Files
+*.log
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# End of file
