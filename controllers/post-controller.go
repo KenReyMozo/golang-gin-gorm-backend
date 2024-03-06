@@ -109,3 +109,37 @@ func PatchPost(ctx *gin.Context) {
 
 	ctx.JSON(200, post)
 }
+
+
+func DeletePost(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	var post model.Post
+	if initializers.DB.First(&post, id).Error != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
+	err := ctx.ShouldBindJSON(&post)
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	tx := initializers.DB.Begin()
+
+	if tx.Error != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+
+	if err := tx.Where("id = ?", id).Delete(&post).Error; err != nil {
+		tx.Rollback()
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+		return
+	}
+
+	tx.Commit()
+
+	ctx.JSON(200, post)
+}
