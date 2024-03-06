@@ -31,115 +31,47 @@ func CreatePost(ctx *gin.Context) {
 
 func GetPosts(ctx *gin.Context) {
 	var posts []model.Post
-	initializers.DB.Find(&posts)
+	if err := GetModels(ctx, &posts); err != nil { return }
 
 	ctx.JSON(200, posts)
 }
 
 func GetPost(ctx *gin.Context) {
-	id := ctx.Param("id")
-
 	var post model.Post
-	initializers.DB.First(&post, id)
+	if err := GetModelByID(ctx, &post); err != nil { return }
 
 	ctx.JSON(200, post)
 }
 
 func UpdatePost(ctx *gin.Context) {
-	id := ctx.Param("id")
 
 	var post model.Post
-	if initializers.DB.First(&post, id).Error != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-		return
-	}
-
-	err := ctx.ShouldBindJSON(&post)
-	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return
-	}
-
-	tx := initializers.DB.Begin()
-
-	if tx.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
-		return
-	}
-
-	if err := tx.Model(&post).Where("id = ?", id).Updates(&post).Error; err != nil {
-		tx.Rollback()
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
-		return
-	}
-
-	tx.Commit()
+	if err := GetModelByID(ctx, &post); err != nil { return }
+	if err := BindModel(ctx, &post); err != nil { return }
+	tx := StartTransation(ctx)
+	if tx == nil { return }
+	if err := UpdateModelByID(ctx, tx, &post); err != nil { return }
 	ctx.JSON(200, post)
 }
 
 func PatchPost(ctx *gin.Context) {
-	id := ctx.Param("id")
 
 	var post model.Post
-	if initializers.DB.First(&post, id).Error != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-		return
-	}
-
-	err := ctx.ShouldBindJSON(&post)
-	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return
-	}
-
-	tx := initializers.DB.Begin()
-
-	if tx.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
-		return
-	}
-
-	if err := tx.Model(&post).Where("id = ?", id).Updates(&post).Error; err != nil {
-		tx.Rollback()
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
-		return
-	}
-
-	tx.Commit()
+	if err := GetModelByID(ctx, &post); err != nil { return }
+	tx := StartTransation(ctx)
+	if tx == nil { return }
+	if err := UpdateModelByID(ctx, tx, &post); err != nil { return }
 
 	ctx.JSON(200, post)
 }
 
-
 func DeletePost(ctx *gin.Context) {
-	id := ctx.Param("id")
 
 	var post model.Post
-	if initializers.DB.First(&post, id).Error != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-		return
-	}
+	if err := GetModelByID(ctx, &post); err != nil { return }
+	tx := StartTransation(ctx)
+	if tx == nil { return }
+	if err := DeleteModelByID(ctx, tx, &post); err != nil { return }
 
-	err := ctx.ShouldBindJSON(&post)
-	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return
-	}
-
-	tx := initializers.DB.Begin()
-
-	if tx.Error != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
-		return
-	}
-
-	if err := tx.Where("id = ?", id).Delete(&post).Error; err != nil {
-		tx.Rollback()
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
-		return
-	}
-
-	tx.Commit()
-
-	ctx.JSON(200, post)
+	ctx.JSON(http.StatusOK, post);
 }
