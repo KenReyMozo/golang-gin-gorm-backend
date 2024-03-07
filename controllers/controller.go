@@ -70,3 +70,9 @@ func BindModel(ctx *gin.Context, entity interface{}) error {
 	}
 	return nil
 }
+
+func SetResponse(ctx *gin.Context, code int) {
+	ctx.JSON(code, gin.H {
+		"error": "Status Failed",
+	})
+}
