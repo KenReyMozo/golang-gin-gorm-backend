@@ -12,4 +12,5 @@ func init() {
 
 func main() {
 	initializers.DB.AutoMigrate(&model.Post{})
+	initializers.DB.AutoMigrate(&model.User{})
 }
