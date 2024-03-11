@@ -1,9 +1,7 @@
 package model
 
-import "gorm.io/gorm"
-
 type Post struct {
-	gorm.Model
+	BaseModel
 	Title string `json:"title"`
-	Body string `json:"body"`
+	Body  string `json:"body"`
 }

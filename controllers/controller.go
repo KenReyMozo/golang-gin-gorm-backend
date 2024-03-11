@@ -54,7 +54,7 @@ func GetModels(ctx *gin.Context, entity interface{}) error {
 
 func GetModelByID(ctx *gin.Context, entity interface{}) error {
 	id := ctx.Param("id")
-	err := initializers.DB.First(&entity, id).Error;
+	err := initializers.DB.First(&entity, "id = ?", id).Error;
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 		return err
@@ -72,7 +72,33 @@ func BindModel(ctx *gin.Context, entity interface{}) error {
 }
 
 func SetResponse(ctx *gin.Context, code int) {
+
+	var hint = ""
+	var message = ""
+
+	switch {
+		case code >= 100 && code <= 199:
+			hint = "Information"
+			message = "Informational"
+		case code >= 200 && code <= 299:
+			hint = "Success"
+			message = "Success"
+		case code >= 300 && code <= 399:
+			hint = "Redirection"
+			message = "Redirection"
+		case code >= 400 && code <= 499:
+			hint = "Client Error"
+			message = "Failed"
+		case code >= 100 && code <= 599:
+			hint = "Server Error"
+			message = "Something went wrong"
+		default:
+			hint = "red"
+			message = "ERROR"
+	}
+
 	ctx.JSON(code, gin.H {
-		"error": "Status Failed",
+		"message": message,
+		"hint": hint,
 	})
 }
