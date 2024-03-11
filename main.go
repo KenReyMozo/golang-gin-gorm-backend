@@ -21,6 +21,8 @@ func main() {
 		middlewares.Logger(),
 	)
 
+	r.POST("/signup", controllers.SignUpUser)
+
 	r.POST("/posts", controllers.CreatePost)
 	r.GET("/posts", controllers.GetPosts)
 	r.GET("/posts/:id", controllers.GetPost)

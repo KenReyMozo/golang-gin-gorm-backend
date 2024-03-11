@@ -12,7 +12,10 @@ import (
 func SignUpUser(ctx *gin.Context) {
 
 	var user model.User
-	if err := BindModel(ctx, &user); err != nil { return }
+	if err := BindModel(ctx, &user); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
