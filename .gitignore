@@ -23,6 +23,7 @@ bin/
 
 # Environment Files
 *.env
+*.local
 
 # Log Files
 *.log
