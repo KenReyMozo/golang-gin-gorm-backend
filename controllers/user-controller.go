@@ -73,3 +73,9 @@ func LoginUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H {})
 }
+
+func ValidateUser(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "I'm logged in",
+	})
+}
