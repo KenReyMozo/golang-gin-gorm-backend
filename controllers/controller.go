@@ -62,6 +62,16 @@ func GetModelByID(ctx *gin.Context, entity interface{}) error {
 	return nil
 }
 
+func GetModelBySingleQuery(ctx *gin.Context, queryField string, value string, entity interface{}) error {
+	var queryString = queryField + " = ?"
+	err := initializers.DB.First(&entity, queryString, value).Error;
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return err
+	}
+	return nil
+}
+
 func BindModel(ctx *gin.Context, entity interface{}) error {
 	err := ctx.ShouldBindJSON(&entity)
 	if err != nil {

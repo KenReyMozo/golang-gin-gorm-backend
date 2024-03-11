@@ -22,6 +22,7 @@ func main() {
 	)
 
 	r.POST("/signup", controllers.SignUpUser)
+	r.POST("/login", controllers.LoginUser)
 
 	r.POST("/posts", controllers.CreatePost)
 	r.GET("/posts", controllers.GetPosts)

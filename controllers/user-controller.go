@@ -4,8 +4,11 @@ import (
 	"go-backend/initializers"
 	model "go-backend/models"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,4 +35,42 @@ func SignUpUser(ctx *gin.Context) {
 	}
 
 	SetResponse(ctx, http.StatusOK)
+}
+
+func LoginUser(ctx *gin.Context) {
+	var body model.User
+
+	if err := BindModel(ctx, &body); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	var user model.User
+	if err := GetModelBySingleQuery(ctx, "email", body.Email, &user); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id": user.ID,
+		"expires": time.Hour * 24,
+		"expiration": time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	ctx.SetSameSite(http.SameSiteLaxMode)
+
+	ctx.JSON(http.StatusOK, gin.H {
+		"token": tokenString,
+	})
 }
