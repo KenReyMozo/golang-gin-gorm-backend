@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"go-backend/initializers"
 	model "go-backend/models"
+	"go-backend/utils"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +15,23 @@ import (
 )
 
 func RequireAuth(ctx *gin.Context) {
-	tokenString, err := ctx.Cookie("Authorization")
-	if err != nil {
-		ctx.AbortWithStatus(http.StatusUnauthorized)
-	}
+	authorizationHeader := ctx.GetHeader("Authorization")
+		if authorizationHeader == "" {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+	
+		if !strings.HasPrefix(authorizationHeader, "Bearer ") {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	tokenString := strings.TrimPrefix(authorizationHeader, "Bearer ")
+	decText, err := utils.Decrypt(tokenString)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+	token, err := jwt.Parse(decText, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

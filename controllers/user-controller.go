@@ -3,12 +3,13 @@ package controllers
 import (
 	"go-backend/initializers"
 	model "go-backend/models"
+	"go-backend/utils"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -69,13 +70,38 @@ func LoginUser(ctx *gin.Context) {
 	}
 
 	ctx.SetSameSite(http.SameSiteLaxMode)
-	ctx.SetCookie("Authorization", tokenString, 3600 * 8, "", "", false, true)
-
-	ctx.JSON(http.StatusOK, gin.H {})
+	// ctx.SetCookie("Authorization", tokenString, 3600 * 8, "", "", false, true)
+	println(tokenString)
+	encText, err := utils.Encrypt(tokenString)
+	if err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+	}
+	println(encText)
+	ctx.JSON(http.StatusOK, gin.H {
+		"token": encText,
+	})
 }
 
 func ValidateUser(ctx *gin.Context) {
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "I'm logged in",
 	})
+}
+
+func OAuthLogin(c *gin.Context) {
+	url := initializers.OAuthConfig.AuthCodeURL("state")
+	c.Redirect(http.StatusFound, url)
+}
+
+func OAuthCallback(c *gin.Context) {
+	code := c.Query("code")
+	token, err := initializers.OAuthConfig.Exchange(c, code)
+	if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange code for token"})
+			return
+	}
+
+	// Successful authentication
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }

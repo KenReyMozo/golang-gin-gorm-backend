@@ -13,6 +13,7 @@ func init() {
 	initializers.SetupEnv()
 	initializers.ConnectToDB()
 	initializers.SetupLogger()
+	initializers.SetupOAuth2()
 }
 
 func main() {
@@ -22,7 +23,9 @@ func main() {
 		middlewares.Logger(),
 		middlewares.Cors(),
 	)
-
+	
+	r.GET("/oauth/login", controllers.OAuthLogin)
+	r.GET("/oauth/callback", controllers.OAuthCallback)
 	r.POST("/signup", controllers.SignUpUser)
 	r.POST("/login", controllers.LoginUser)
 	r.GET("/validate", controllers.RequireAuth, controllers.ValidateUser)
