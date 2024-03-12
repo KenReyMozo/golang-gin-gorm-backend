@@ -20,6 +20,7 @@ func main() {
 	r.Use(
 		gin.Recovery(),
 		middlewares.Logger(),
+		middlewares.Cors(),
 	)
 
 	r.POST("/signup", controllers.SignUpUser)
