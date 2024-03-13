@@ -11,6 +11,7 @@ import (
 )
 
 func ParseByteArray(byteString string) []byte {
+
 	byteStrArr := strings.Split(byteString, ",")
 	byteValues := make([]byte, len(byteStrArr))
 
@@ -27,13 +28,13 @@ func ParseByteArray(byteString string) []byte {
 }
 
 func Encode(b []byte) string {
- return base64.StdEncoding.EncodeToString(b)
+	return base64.StdEncoding.EncodeToString(b)
 }
 
 func Decode(s string) []byte {
 	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-	 panic(err)
+		panic(err)
 	}
 	return data
 }
@@ -45,8 +46,9 @@ func Encrypt(text string) (string, error) {
 
 	block, err := aes.NewCipher([]byte(mySecretKey))
 	if err != nil {
-	 return "", err
+		return "", err
 	}
+
 	plainText := []byte(text)
 	cfb := cipher.NewCFBEncrypter(block, bytes)
 	cipherText := make([]byte, len(plainText))
@@ -63,6 +65,7 @@ func Decrypt(text string) (string, error) {
 	if err != nil {
 	 return "", err
 	}
+
 	cipherText := Decode(text)
 	cfb := cipher.NewCFBDecrypter(block, bytes)
 	plainText := make([]byte, len(cipherText))

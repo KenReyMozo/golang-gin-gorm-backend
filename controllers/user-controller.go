@@ -71,12 +71,11 @@ func LoginUser(ctx *gin.Context) {
 
 	ctx.SetSameSite(http.SameSiteLaxMode)
 	// ctx.SetCookie("Authorization", tokenString, 3600 * 8, "", "", false, true)
-	println(tokenString)
 	encText, err := utils.Encrypt(tokenString)
+
 	if err != nil {
 		SetResponse(ctx, http.StatusBadRequest)
 	}
-	println(encText)
 	ctx.JSON(http.StatusOK, gin.H {
 		"token": encText,
 	})

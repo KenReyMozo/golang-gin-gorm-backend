@@ -12,15 +12,13 @@ func init() {
 	initializers.LoadEnv()
 	initializers.SetupEnv()
 	initializers.ConnectToDB()
-	initializers.SetupLogger()
-	initializers.SetupOAuth2()
 }
 
 func main() {
 	r := gin.New()
 	r.Use(
 		gin.Recovery(),
-		middlewares.Logger(),
+		middlewares.LoggerPerDay(),
 		middlewares.Cors(),
 	)
 	
