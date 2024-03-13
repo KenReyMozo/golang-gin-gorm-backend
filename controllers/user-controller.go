@@ -88,6 +88,26 @@ func ValidateUser(ctx *gin.Context) {
 	})
 }
 
+func GetMe(ctx *gin.Context) {
+	ctxUser, exists := ctx.Get(USER_KEY)
+
+	if !exists {
+		SetResponse(ctx, http.StatusBadRequest)
+		return;
+	}
+
+	user, ok := ctxUser.(model.User)
+	if !ok {
+		SetResponse(ctx, http.StatusBadRequest)
+		return;
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"id": user.ID,
+		"email": user.Email,
+	})
+}
+
 func OAuthLogin(c *gin.Context) {
 	url := initializers.OAuthConfig.AuthCodeURL("state")
 	c.Redirect(http.StatusFound, url)

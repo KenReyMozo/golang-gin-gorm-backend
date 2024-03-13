@@ -14,6 +14,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const USER_KEY = "user"
+
 func RequireAuth(ctx *gin.Context) {
 	authorizationHeader := ctx.GetHeader("Authorization")
 		if authorizationHeader == "" {
@@ -54,7 +56,7 @@ func RequireAuth(ctx *gin.Context) {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		}
 
-		ctx.Set("user", user)
+		ctx.Set(USER_KEY, user)
 
 		ctx.Next()
 	} else {
