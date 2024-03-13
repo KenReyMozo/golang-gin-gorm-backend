@@ -39,13 +39,18 @@ func SignUpUser(ctx *gin.Context) {
 }
 
 func LoginUser(ctx *gin.Context) {
-	var body model.User
-
+	type Body struct {
+		Email    string
+		Password string
+		Test string
+	}
+	var body Body
 	if err := BindModel(ctx, &body); err != nil {
 		SetResponse(ctx, http.StatusBadRequest)
 		return
 	}
 
+	println(body.Test)
 	var user model.User
 	if err := GetModelBySingleQuery(ctx, "email", body.Email, &user); err != nil {
 		SetResponse(ctx, http.StatusBadRequest)
