@@ -57,10 +57,15 @@ func LoginUser(ctx *gin.Context) {
 		return
 	}
 
+	expires_ms := time.Hour * 10;
+	expires_s := expires_ms.Seconds();
+	expiration_date := time.Now().Add(expires_ms)
+	expiration := expiration_date.Unix()
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id": user.ID,
-		"expires": time.Hour * 24,
-		"expiration": time.Now().Add(time.Hour * 24).Unix(),
+		"expires": expires_s,
+		"expiration": expiration,
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -77,7 +82,9 @@ func LoginUser(ctx *gin.Context) {
 		SetResponse(ctx, http.StatusBadRequest)
 	}
 	ctx.JSON(http.StatusOK, gin.H {
-		"token": encText,
+		"access_token": encText,
+		"expiration": expiration_date,
+		"expires": expires_s,
 	})
 }
 

@@ -17,29 +17,40 @@ import (
 const USER_KEY = "user"
 
 func RequireAuth(ctx *gin.Context) {
+
 	authorizationHeader := ctx.GetHeader("Authorization")
-		if authorizationHeader == "" {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-	
-		if !strings.HasPrefix(authorizationHeader, "Bearer ") {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
+
+	if authorizationHeader == "" {
+
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		SetResponse(ctx, http.StatusUnauthorized)
+		return
+	}
+
+	if !strings.HasPrefix(authorizationHeader, "Bearer ") {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		SetResponse(ctx, http.StatusUnauthorized)
+		return
+	}
+
+	if strings.Contains(authorizationHeader, "undefined") {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		SetResponse(ctx, http.StatusUnauthorized)
+		return
+	}
 
 	tokenString := strings.TrimPrefix(authorizationHeader, "Bearer ")
 	decText, err := utils.Decrypt(tokenString)
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
+
 	token, err := jwt.Parse(decText, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
-
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 	}
