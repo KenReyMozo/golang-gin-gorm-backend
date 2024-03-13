@@ -4,6 +4,7 @@ import (
 	"go-backend/controllers"
 	"go-backend/initializers"
 	"go-backend/middlewares"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,12 +17,14 @@ func init() {
 
 func main() {
 	r := gin.New()
+
 	r.Use(
 		gin.Recovery(),
 		middlewares.LoggerPerDay(),
 		middlewares.Cors(),
+		middlewares.CustomRateLimiter(3, time.Second/2),
 	)
-	
+
 	r.GET("/oauth/login", controllers.OAuthLogin)
 	r.GET("/oauth/callback", controllers.OAuthCallback)
 	r.POST("/signup", controllers.SignUpUser)

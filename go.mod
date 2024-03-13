@@ -11,6 +11,7 @@ require (
 	github.com/go-oauth2/oauth2/v4 v4.5.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/vgarvardt/go-oauth2-pg/v4 v4.4.4 // indirect
 	github.com/vgarvardt/go-pg-adapter v1.0.0 // indirect
