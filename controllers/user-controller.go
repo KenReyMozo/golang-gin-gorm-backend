@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"go-backend/initializers"
 	model "go-backend/models"
 	"go-backend/utils"
@@ -27,7 +28,7 @@ func SignUpUser(ctx *gin.Context) {
 		return
 	}
 
-	newUser := model.User{ Email: user.Email, Password: string(hashedPass)}
+	newUser := model.User{Email: user.Email, Password: string(hashedPass)}
 	result := initializers.DB.Create(&newUser)
 
 	if result.Error != nil {
@@ -39,18 +40,13 @@ func SignUpUser(ctx *gin.Context) {
 }
 
 func LoginUser(ctx *gin.Context) {
-	type Body struct {
-		Email    string
-		Password string
-		Test string
-	}
-	var body Body
+
+	var body model.User
 	if err := BindModel(ctx, &body); err != nil {
 		SetResponse(ctx, http.StatusBadRequest)
 		return
 	}
 
-	println(body.Test)
 	var user model.User
 	if err := GetModelBySingleQuery(ctx, "email", body.Email, &user); err != nil {
 		SetResponse(ctx, http.StatusBadRequest)
@@ -62,14 +58,14 @@ func LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	expires_ms := time.Hour * 10;
-	expires_s := expires_ms.Seconds();
+	expires_ms := time.Hour * 10
+	expires_s := expires_ms.Seconds()
 	expiration_date := time.Now().Add(expires_ms)
 	expiration := expiration_date.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id": user.ID,
-		"expires": expires_s,
+		"id":         user.ID,
+		"expires":    expires_s,
 		"expiration": expiration,
 	})
 
@@ -85,11 +81,77 @@ func LoginUser(ctx *gin.Context) {
 
 	if err != nil {
 		SetResponse(ctx, http.StatusBadRequest)
+		return
 	}
-	ctx.JSON(http.StatusOK, gin.H {
+
+	ctx.JSON(http.StatusOK, gin.H{
 		"access_token": encText,
-		"expiration": expiration_date,
-		"expires": expires_s,
+		"expiration":   expiration_date,
+		"expires":      expires_s,
+	})
+}
+
+func EncLoginUser(ctx *gin.Context) {
+
+	var body model.EncModel
+
+	if err := BindModel(ctx, &body); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	decrypted, err := utils.Decrypt(body.Data)
+	if err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+	var rawUser model.RawUser
+	if err := json.Unmarshal([]byte(decrypted), &rawUser); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	var user model.User
+	if err := GetModelBySingleQuery(ctx, "email", rawUser.Email, &user); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(rawUser.Password)); err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	expires_ms := time.Hour * 10
+	expires_s := expires_ms.Seconds()
+	expiration_date := time.Now().Add(expires_ms)
+	expiration := expiration_date.Unix()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":         user.ID,
+		"expires":    expires_s,
+		"expiration": expiration,
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	// ctx.SetCookie("Authorization", tokenString, 3600 * 8, "", "", false, true)
+	encText, err := utils.Encrypt(tokenString)
+
+	if err != nil {
+		SetResponse(ctx, http.StatusBadRequest)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"access_token": encText,
+		"expiration":   expiration_date,
+		"expires":      expires_s,
 	})
 }
 
@@ -105,17 +167,17 @@ func GetMe(ctx *gin.Context) {
 
 	if !exists {
 		SetResponse(ctx, http.StatusBadRequest)
-		return;
+		return
 	}
 
 	user, ok := ctxUser.(model.User)
 	if !ok {
 		SetResponse(ctx, http.StatusBadRequest)
-		return;
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"id": user.ID,
+		"id":    user.ID,
 		"email": user.Email,
 	})
 }
@@ -129,8 +191,8 @@ func OAuthCallback(c *gin.Context) {
 	code := c.Query("code")
 	token, err := initializers.OAuthConfig.Exchange(c, code)
 	if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange code for token"})
-			return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange code for token"})
+		return
 	}
 
 	// Successful authentication

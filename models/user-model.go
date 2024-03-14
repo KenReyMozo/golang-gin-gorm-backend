@@ -5,3 +5,8 @@ type User struct {
 	Email    string `gorm:"unique"`
 	Password string
 }
+
+type RawUser struct {
+	Email    string
+	Password string
+}

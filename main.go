@@ -25,10 +25,11 @@ func main() {
 		middlewares.CustomRateLimiter(3, time.Second/2),
 	)
 
-	r.GET("/oauth/login", controllers.OAuthLogin)
-	r.GET("/oauth/callback", controllers.OAuthCallback)
 	r.POST("/signup", controllers.SignUpUser)
+
 	r.POST("/login", controllers.LoginUser)
+	r.POST("/login-secure", controllers.EncLoginUser)
+
 	r.GET("/validate", controllers.RequireAuth, controllers.ValidateUser)
 	r.GET("/me", controllers.RequireAuth, controllers.GetMe)
 

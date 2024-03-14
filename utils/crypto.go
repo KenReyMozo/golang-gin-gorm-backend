@@ -3,72 +3,68 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"encoding/base64"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
-	"strconv"
-	"strings"
+
+	"github.com/mergermarket/go-pkcs7"
 )
 
-func ParseByteArray(byteString string) []byte {
-
-	byteStrArr := strings.Split(byteString, ",")
-	byteValues := make([]byte, len(byteStrArr))
-
-	for i, byteStr := range byteStrArr {
-		byteVal, err := strconv.Atoi(byteStr)
-		if err != nil {
-			fmt.Println("Error parsing byte value:", err)
-			continue
-		}
-		byteValues[i] = byte(byteVal)
-	}
-
-	return byteValues
-}
-
-func Encode(b []byte) string {
-	return base64.StdEncoding.EncodeToString(b)
-}
-
-func Decode(s string) []byte {
-	data, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		panic(err)
-	}
-	return data
-}
-
-func Encrypt(text string) (string, error) {
+func Encrypt(unencrypted string) (string, error) {
 	mySecretKey := os.Getenv("ENCRYPT_SECRET_KEY")
-	myIVKey := os.Getenv("ENCRYPT_IV_KEY")
-	bytes := ParseByteArray(myIVKey)
+	key := []byte(mySecretKey)
+	plainText := []byte(unencrypted)
+	plainText, err := pkcs7.Pad(plainText, aes.BlockSize)
+	if err != nil {
+		return "", fmt.Errorf(`plainText: "%s" has error`, plainText)
+	}
+	if len(plainText)%aes.BlockSize != 0 {
+		err := fmt.Errorf(`plainText: "%s" has the wrong block size`, plainText)
+		return "", err
+	}
 
-	block, err := aes.NewCipher([]byte(mySecretKey))
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
 
-	plainText := []byte(text)
-	cfb := cipher.NewCFBEncrypter(block, bytes)
-	cipherText := make([]byte, len(plainText))
-	cfb.XORKeyStream(cipherText, plainText)
-	return Encode(cipherText), nil
-}
-
-func Decrypt(text string) (string, error) {
-	mySecretKey := os.Getenv("ENCRYPT_SECRET_KEY")
-	myIVKey := os.Getenv("ENCRYPT_IV_KEY")
-	bytes := ParseByteArray(myIVKey)
-
-	block, err := aes.NewCipher([]byte(mySecretKey))
-	if err != nil {
-	 return "", err
+	cipherText := make([]byte, aes.BlockSize+len(plainText))
+	iv := cipherText[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
 	}
 
-	cipherText := Decode(text)
-	cfb := cipher.NewCFBDecrypter(block, bytes)
-	plainText := make([]byte, len(cipherText))
-	cfb.XORKeyStream(plainText, cipherText)
-	return string(plainText), nil
- }
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(cipherText[aes.BlockSize:], plainText)
+
+	return fmt.Sprintf("%x", cipherText), nil
+}
+
+// Decrypt decrypts cipher text string into plain text string
+func Decrypt(encrypted string) (string, error) {
+	mySecretKey := os.Getenv("ENCRYPT_SECRET_KEY")
+	key := []byte(mySecretKey)
+	cipherText, _ := hex.DecodeString(encrypted)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(cipherText) < aes.BlockSize {
+		panic("cipherText too short")
+	}
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+	if len(cipherText)%aes.BlockSize != 0 {
+		panic("cipherText is not a multiple of the block size")
+	}
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(cipherText, cipherText)
+
+	cipherText, _ = pkcs7.Unpad(cipherText, aes.BlockSize)
+	return string(cipherText), nil
+}
