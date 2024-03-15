@@ -10,6 +10,7 @@ import (
 )
 
 func init() {
+	initializers.SetupDirs()
 	initializers.LoadEnv()
 	initializers.SetupEnv()
 	initializers.ConnectToDB()

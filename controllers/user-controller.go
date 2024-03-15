@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"go-backend/initializers"
+	"go-backend/logger"
 	model "go-backend/models"
 	"go-backend/utils"
 	"net/http"
@@ -148,6 +149,7 @@ func EncLoginUser(ctx *gin.Context) {
 		return
 	}
 
+	logger.LogUserAction(user.ID.String(), user.Email, logger.ACTION_LOGIN)
 	ctx.JSON(http.StatusOK, gin.H{
 		"access_token": encText,
 		"expiration":   expiration_date,
